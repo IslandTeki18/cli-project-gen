@@ -39,12 +39,12 @@
   - [x] Implement saving current configuration as a blueprint (save to `~/.mycli/blueprints.json`).
 
 ## File & Directory Generation Infrastructure
-- [ ] **General File Generation**
-  - [ ] Create output directory based on a fixed root folder (e.g., `~/dev/templates/`).
-  - [ ] Create subdirectory named after the project name.
-  - [ ] Implement dry-run mode to simulate file generation.
+- [x] **General File Generation**
+  - [x] Create output directory based on a fixed root folder (e.g., `~/dev/templates/`).
+  - [x] Create subdirectory named after the project name.
+  - [x] Implement dry-run mode to simulate file generation.
 - [ ] **Generate Common Files**
-  - [ ] Create `.env` file with default variables (PORT, DB URIs, JWT_SECRET, API_URL).
+  - [x] Create `.env` file with default variables (PORT, DB URIs, JWT_SECRET, API_URL).
   - [ ] Create `.gitignore` file with basic ignore rules.
   - [ ] Create `prettier.config.js` with preferred configuration.
 - [ ] **Project Structure Generation**
