@@ -15,28 +15,28 @@
   - [x] Output “CLI initialized” message on startup.
 
 ## Interactive CLI Prompts
-- [ ] **Prompt for Core Project Data**
-  - [ ] Prompt for project type: Web (React + TailwindCSS) or Mobile (Expo + NativeWind).
-  - [ ] Prompt for project name; validate valid folder names.
-  - [ ] Store responses in a shared configuration object.
-- [ ] **Feature Selection Prompts**
-  - [ ] Prompt for feature selection:
-    - [ ] Authentication
-    - [ ] User profiles
-    - [ ] User settings
-    - [ ] Responsive layout
-    - [ ] CRUD setup
-    - [ ] State management (Redux vs Context)
-    - [ ] Light/Dark theme toggle
-    - [ ] API choice (REST vs GraphQL)
-  - [ ] Summarize selected features with stylized output.
-- [ ] **Backend Stack & Blueprints**
-  - [ ] Prompt for backend stack choices:
-    - [ ] MongoDB or PostgreSQL
-    - [ ] REST vs GraphQL API
-    - [ ] Role-based auth, JWT, and API versioning
-  - [ ] Offer option to select a saved blueprint.
-  - [ ] Implement saving current configuration as a blueprint (save to `~/.mycli/blueprints.json`).
+- [x] **Prompt for Core Project Data**
+  - [x] Prompt for project type: Web (React + TailwindCSS) or Mobile (Expo + NativeWind).
+  - [x] Prompt for project name; validate valid folder names.
+  - [x] Store responses in a shared configuration object.
+- [x] **Feature Selection Prompts**
+  - [x] Prompt for feature selection:
+    - [x] Authentication
+    - [x] User profiles
+    - [x] User settings
+    - [x] Responsive layout
+    - [x] CRUD setup
+    - [x] State management (Redux vs Context)
+    - [x] Light/Dark theme toggle
+    - [x] API choice (REST vs GraphQL)
+  - [x] Summarize selected features with stylized output.
+- [x] **Backend Stack & Blueprints**
+  - [x] Prompt for backend stack choices:
+    - [x] MongoDB or PostgreSQL
+    - [x] REST vs GraphQL API
+    - [x] Role-based auth, JWT, and API versioning
+  - [x] Offer option to select a saved blueprint.
+  - [x] Implement saving current configuration as a blueprint (save to `~/.mycli/blueprints.json`).
 
 ## File & Directory Generation Infrastructure
 - [ ] **General File Generation**
