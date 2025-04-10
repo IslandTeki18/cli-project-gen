@@ -457,94 +457,503 @@ passport.use(
   })
 );
 `,
+    // Add missing template definitions as needed
+    webLoginContent: () => `import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+const Login: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination from location state or default to homepage
+  const from = location.state?.from?.pathname || "/";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    // Demo authentication - in a real app, you would make an API call
+    if (email === 'demo@example.com' && password === 'password') {
+      // Successful login
+      navigate(from, { replace: true });
+    } else {
+      setError('Invalid email or password');
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div className="mb-6">
+          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        
+        <div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          >
+            Sign In
+          </button>
+        </div>
+      </form>
+      
+      <div className="mt-4 text-center">
+        <p className="text-sm text-gray-600">
+          Demo credentials: demo@example.com / password
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Login;`,
+
+    webRequireAuthContent: () => `import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+
+// Import authentication context or hook based on state management choice
+// This should be replaced with actual implementation
+const useAuth = () => {
+  // This is a mock implementation
+  return {
+    isAuthenticated: false
+  };
+};
+
+interface RequireAuthProps {
+  children: JSX.Element;
+}
+
+const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    // Redirect to the login page but save the current location
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+export default RequireAuth;`,
+
+    webAuthIndexContent: () => `// Export all auth-related components and hooks
+export { default as Login } from './components/Login';
+export { default as RequireAuth } from './components/RequireAuth';
+`,
+
+    backendAuthIndexContent: () => `// Export service functions
+export * from './auth.service';
+export * from './user.service';
+`,
+
+    webAuthSliceContent:
+      () => `import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from '@/lib/store';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: AuthState = {
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  loading: false,
+  error: null
+};
+
+export const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    loginStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.error = null;
+    },
+    loginFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    logout: (state) => {
+      state.isAuthenticated = false;
+      state.user = null;
+      state.token = null;
+    },
+  },
+});
+
+export const { loginStart, loginSuccess, loginFailure, logout } = authSlice.actions;
+
+export const selectAuth = (state: RootState) => state.auth;
+
+export default authSlice.reducer;`,
+
+    webStoreContent: () => `import { configureStore } from '@reduxjs/toolkit';
+import authReducer from '@/features/auth/authSlice';
+
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+    // Add more reducers as needed
+  },
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;`,
+
+    webAuthContextContent:
+      () => `import React, { createContext, useContext, useState, ReactNode } from 'react';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface AuthContextType {
+  isAuthenticated: boolean;
+  user: User | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Mock login function - in a real app, this would make an API call
+  const login = async (email: string, password: string) => {
+    // Demo login
+    if (email === 'demo@example.com' && password === 'password') {
+      const userData = {
+        id: '1',
+        name: 'Demo User',
+        email: 'demo@example.com',
+      };
+      setUser(userData);
+      setIsAuthenticated(true);
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  const value = {
+    isAuthenticated,
+    user,
+    login,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};`,
+
+    webThemeContent:
+      () => `import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+type Theme = 'light' | 'dark';
+
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  // Initialize theme from local storage or system preference
+  const [theme, setTheme] = useState<Theme>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+    
+    // Use system preference as fallback
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  // Update body class when theme changes
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};`,
   };
 
   return templates[contentKey] ? templates[contentKey](config) : "";
 };
 
-// Ensure blueprint directory exists
-const ensureBlueprintDir = (): void => {
-  if (!fs.existsSync(BLUEPRINT_DIR)) {
-    fs.mkdirSync(BLUEPRINT_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(BLUEPRINT_FILE)) {
-    fs.writeFileSync(BLUEPRINT_FILE, JSON.stringify([], null, 2));
-  }
+// Define project template directories
+const TEMPLATE_DIRS = {
+  web: {
+    root: [
+      "src",
+      "src/app",
+      "src/features",
+      "src/features/home",
+      "src/shared",
+      "src/lib",
+      "public",
+    ],
+    files: {
+      "src/index.tsx": "webIndexContent",
+      "src/index.css": "webCssContent",
+      "src/app/App.tsx": "webAppContent",
+      "src/features/home/Home.tsx": "webHomeContent",
+      "src/shared/Layout.tsx": "webLayoutContent",
+      "src/shared/Navbar.tsx": "webNavbarContent",
+    },
+  },
+  mobile: {
+    root: [
+      "src",
+      "src/app",
+      "src/features",
+      "src/features/home",
+      "src/shared",
+      "src/lib",
+      "assets",
+    ],
+    files: {
+      // Define mobile template files
+    },
+  },
+  backend: {
+    root: [
+      "src",
+      "src/config",
+      "src/controllers",
+      "src/middleware",
+      "src/models",
+      "src/routes",
+      "src/services",
+      "src/utils",
+    ],
+    files: {
+      "src/index.ts": "backendIndexContent",
+      "src/config/index.ts": "backendConfigContent",
+      "src/config/database.ts": "backendDatabaseContent",
+      "src/config/passport.ts": "backendPassportContent",
+    },
+  },
 };
 
-// Load blueprints
-const loadBlueprints = (): Blueprint[] => {
-  ensureBlueprintDir();
-  try {
-    const data = fs.readFileSync(BLUEPRINT_FILE, "utf8");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error(chalk.red("Error loading blueprints:"), error);
-    return [];
-  }
+// Function to configure a new project from user input
+const configureProject = async (): Promise<ProjectConfig> => {
+  // Get project type
+  const { projectType } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "projectType",
+      message: "Select the type of project to generate:",
+      choices: [
+        { name: "Web (React + TailwindCSS)", value: "web" },
+        { name: "Mobile (Expo + NativeWind)", value: "mobile" },
+        { name: "Backend Only", value: "backend" },
+      ],
+    },
+  ]);
+
+  // Get feature selections
+  const featureSelections = await promptForFeatures(projectType);
+
+  // Get project name
+  const { projectName } = await inquirer.prompt([
+    {
+      type: "input",
+      name: "projectName",
+      message: "Enter a name for your project:",
+      validate: validateProjectName,
+    },
+  ]);
+
+  return {
+    type: projectType,
+    name: projectName,
+    features: {
+      authentication: featureSelections.features?.authentication || false,
+      userProfiles: featureSelections.features?.userProfiles || false,
+      userSettings: featureSelections.features?.userSettings || false,
+      responsiveLayout: featureSelections.features?.responsiveLayout || false,
+      crudSetup: featureSelections.features?.crudSetup || false,
+    },
+    stateManagement: featureSelections.stateManagement || "redux",
+    themeToggle: featureSelections.themeToggle || false,
+    apiType: featureSelections.apiType || "rest",
+    backend: {
+      database: featureSelections.backend?.database || "mongodb",
+      roleBasedAuth: featureSelections.backend?.roleBasedAuth || false,
+      jwtSetup: featureSelections.backend?.jwtSetup || false,
+      apiVersioning: featureSelections.backend?.apiVersioning || false,
+    },
+  };
 };
 
-// Save blueprint
-const saveBlueprint = (blueprint: Blueprint): void => {
-  ensureBlueprintDir();
-  try {
-    const blueprints = loadBlueprints();
-    blueprints.push(blueprint);
-    fs.writeFileSync(BLUEPRINT_FILE, JSON.stringify(blueprints, null, 2));
-    console.log(
-      chalk.green(`Blueprint "${blueprint.name}" saved successfully!`)
-    );
-  } catch (error) {
-    console.error(chalk.red("Error saving blueprint:"), error);
+/**
+ * Handle post-generation actions (install deps, open in VS Code, start server)
+ */
+const handlePostGenerationActions = async (
+  projectPath: string,
+  projectType: string
+): Promise<void> => {
+  const { action } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "action",
+      message: "What would you like to do next?",
+      choices: [
+        { name: "Install dependencies", value: "install" },
+        { name: "Open in VS Code", value: "vscode" },
+        { name: "Do nothing", value: "nothing" },
+      ],
+    },
+  ]);
+
+  switch (action) {
+    case "install":
+      console.log(chalk.blue("\nInstalling dependencies..."));
+      try {
+        // Change to project directory and run npm install
+        process.chdir(projectPath);
+        const child = spawn("npm", ["install"], { stdio: "inherit" });
+
+        await new Promise((resolve, reject) => {
+          child.on("close", (code) => {
+            if (code === 0) {
+              console.log(
+                chalk.green("\n✅ Dependencies installed successfully!")
+              );
+              resolve(null);
+            } else {
+              console.error(chalk.red("\n❌ Failed to install dependencies."));
+              reject(new Error(`npm install exited with code ${code}`));
+            }
+          });
+        });
+      } catch (error) {
+        console.error(chalk.red("\nError installing dependencies:"), error);
+      }
+      break;
+
+    case "vscode":
+      console.log(chalk.blue("\nOpening project in VS Code..."));
+      try {
+        await execAsync(`code ${projectPath}`);
+        console.log(chalk.green("✅ Project opened in VS Code!"));
+      } catch (error) {
+        console.error(
+          chalk.red("\nError opening VS Code:"),
+          "Make sure VS Code is installed and the 'code' command is in your PATH."
+        );
+      }
+      break;
+
+    default:
+      console.log(chalk.blue("\nYou can now:"));
+      console.log(chalk.gray(`- cd ${projectPath}`));
+      console.log(chalk.gray("- npm install"));
+      console.log(chalk.gray("- npm start"));
+      break;
   }
-};
-
-// Validate project name
-const validateProjectName = (input: string): boolean | string => {
-  const invalidChars = /[<>:"/\\|?*\x00-\x1F]/;
-  const reservedNames = [
-    "con",
-    "prn",
-    "aux",
-    "nul",
-    "com1",
-    "com2",
-    "com3",
-    "com4",
-    "com5",
-    "com6",
-    "com7",
-    "com8",
-    "com9",
-    "lpt1",
-    "lpt2",
-    "lpt3",
-    "lpt4",
-    "lpt5",
-    "lpt6",
-    "lpt7",
-    "lpt8",
-    "lpt9",
-  ];
-
-  if (!input || input.trim() === "") {
-    return "Project name is required";
-  }
-
-  if (invalidChars.test(input)) {
-    return "Project name contains invalid characters";
-  }
-
-  if (reservedNames.includes(input.toLowerCase())) {
-    return "Project name is a reserved name";
-  }
-
-  if (fs.existsSync(path.resolve(process.cwd(), input))) {
-    return "A directory with this name already exists";
-  }
-
-  return true;
 };
 
 // Validate blueprint name
@@ -561,121 +970,6 @@ const validateBlueprintName = (
   }
 
   return true;
-};
-
-/**
- * Check if a newer version of the CLI is available
- */
-const checkForUpdates = async (): Promise<{
-  hasUpdate: boolean;
-  latestVersion: string | null;
-}> => {
-  return new Promise((resolve) => {
-    try {
-      // Simulate HTTP request - in a real app, this would fetch from the VERSION_CHECK_URL
-      // For now, we'll simulate a newer version being available
-      // setTimeout(() => {
-      //   const latestVersion = "0.1.1"; // Simulated newer version
-      //   const hasUpdate = latestVersion !== CLI_VERSION;
-      //   resolve({ hasUpdate, latestVersion });
-      // }, 500);
-
-      // Real implementation would use https.get:
-      /*
-      https.get(VERSION_CHECK_URL, (res) => {
-        let data = '';
-        res.on('data', (chunk) => data += chunk);
-        res.on('end', () => {
-          try {
-            const { version } = JSON.parse(data);
-            const hasUpdate = version !== CLI_VERSION;
-            resolve({ hasUpdate, latestVersion: version });
-          } catch (e) {
-            console.error(chalk.yellow('Warning: Could not parse version data'));
-            resolve({ hasUpdate: false, latestVersion: null });
-          }
-        });
-      }).on('error', (err) => {
-        console.error(chalk.yellow('Warning: Could not check for updates'), err.message);
-        resolve({ hasUpdate: false, latestVersion: null });
-      });
-      */
-    } catch (error) {
-      console.error(chalk.yellow("Warning: Could not check for updates"));
-      resolve({ hasUpdate: false, latestVersion: null });
-    }
-  });
-};
-
-/**
- * Prompt the user to update the CLI
- */
-const promptForUpdate = async (latestVersion: string): Promise<void> => {
-  console.log(
-    chalk.yellow(
-      `\nA new version (${latestVersion}) of cli-project-generator is available!`
-    )
-  );
-  console.log(chalk.yellow(`You are currently using version ${CLI_VERSION}`));
-
-  const { shouldUpdate } = await inquirer.prompt([
-    {
-      type: "confirm",
-      name: "shouldUpdate",
-      message: "Would you like to update now?",
-      default: true,
-    },
-  ]);
-
-  if (shouldUpdate) {
-    console.log(chalk.blue("\nUpdating cli-project-generator..."));
-    try {
-      // In a real implementation, this would run: npm i -g cli-project-generator@latest
-      // For this simulation, we'll just show a message
-      console.log(
-        chalk.green(
-          "Update simulation complete! In a real implementation, this would execute:"
-        )
-      );
-      console.log(chalk.green("npm i -g cli-project-generator@latest"));
-
-      console.log(
-        chalk.green("\nPlease restart the CLI to use the new version.")
-      );
-      process.exit(0);
-    } catch (error) {
-      console.error(chalk.red("Failed to update. Please update manually:"));
-      console.log(chalk.yellow("npm i -g cli-project-generator@latest"));
-    }
-  }
-};
-
-/**
- * Handle fatal errors that should stop the CLI process
- */
-const handleFatalError = (message: string, error: unknown): void => {
-  console.error(chalk.red(`${message}:`));
-
-  if (error instanceof Error) {
-    console.error(chalk.red(`${error.message}`));
-    if (error.stack) {
-      // In development mode, you might want to show the stack trace
-      const isDev = process.env.NODE_ENV === "development";
-      if (isDev) {
-        console.error(chalk.gray(error.stack.split("\n").slice(1).join("\n")));
-      }
-    }
-  } else {
-    console.error(chalk.red(String(error)));
-  }
-
-  console.log(
-    chalk.yellow("\nThe CLI encountered a critical error and cannot continue.")
-  );
-  console.log(chalk.yellow("Please fix the issues above and try again."));
-
-  // Exit with error code
-  process.exit(1);
 };
 
 /**
@@ -902,206 +1196,60 @@ const createProjectCommand = async (options: {
 
     // Ask to save as blueprint if not using an existing blueprint and not in dry run mode
     if (!useBlueprint && !context.dryRun) {
-      await handleBlueprintSaving(context.config);
-    }
-  } catch (error) {
-    context.error = error instanceof Error ? error : new Error(String(error));
-    handleFatalError("Error in project creation workflow", context.error);
-  }
-};
-
-// Handle saving the configuration as a blueprint if requested
-const handleBlueprintSaving = async (config: ProjectConfig): Promise<void> => {
-  try {
-    const { saveAsBlueprint } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "saveAsBlueprint",
-        message:
-          "Do you want to save this configuration as a blueprint for future use?",
-        default: false,
-      },
-    ]);
-
-    if (saveAsBlueprint) {
-      const existingBlueprints = loadBlueprints();
-      const { blueprintName, blueprintDescription } = await inquirer.prompt([
-        {
-          type: "input",
-          name: "blueprintName",
-          message: "Enter a name for this blueprint:",
-          validate: (input) => {
-            if (!input || input.trim() === "") {
-              return "Blueprint name is required";
-            }
-
-            if (existingBlueprints.some((bp) => bp.name === input)) {
-              return "A blueprint with this name already exists";
-            }
-
-            return true;
-          },
-        },
-        {
-          type: "input",
-          name: "blueprintDescription",
-          message: "Enter a description:",
-          default: `${
-            config.type === "web"
-              ? "Web"
-              : config.type === "mobile"
-              ? "Mobile"
-              : "Backend"
-          } project with custom configuration`,
-        },
-      ]);
-
-      const blueprint: Blueprint = {
-        name: blueprintName,
-        description: blueprintDescription,
-        config: {
-          type: config.type,
-          features: config.features,
-          stateManagement: config.stateManagement,
-          themeToggle: config.themeToggle,
-          apiType: config.apiType,
-          backend: config.backend,
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      saveBlueprint(blueprint);
-      console.log(
-        chalk.green(`Blueprint "${blueprintName}" saved successfully!`)
-      );
-    }
-  } catch (error) {
-    console.error(chalk.red("Error saving blueprint:"), error);
-    // Continue with the process even if saving blueprint fails
-  }
-};
-
-/**
- * Get project configuration either from blueprint or user input
- */
-const getProjectConfiguration = async (
-  blueprints: Blueprint[]
-): Promise<ProjectConfig | null> => {
-  try {
-    let config: ProjectConfig | null = null;
-
-    // Ask if the user wants to use an existing blueprint
-    if (blueprints.length > 0) {
-      const { useBlueprint } = await inquirer.prompt([
+      const { saveAsBlueprint } = await inquirer.prompt([
         {
           type: "confirm",
-          name: "useBlueprint",
-          message: "Do you want to use an existing blueprint?",
+          name: "saveAsBlueprint",
+          message:
+            "Do you want to save this configuration as a blueprint for future use?",
           default: false,
         },
       ]);
 
-      if (useBlueprint) {
-        const { selectedBlueprint } = await inquirer.prompt([
-          {
-            type: "list",
-            name: "selectedBlueprint",
-            message: "Select a blueprint:",
-            choices: blueprints.map((bp) => ({
-              name: `${bp.name} - ${bp.description} (${new Date(
-                bp.createdAt
-              ).toLocaleDateString()})`,
-              value: bp,
-            })),
-          },
-        ]);
-
-        // Ask for project name since it's not stored in the blueprint
-        const { name } = await inquirer.prompt([
+      if (saveAsBlueprint) {
+        const existingBlueprints = loadBlueprints();
+        const { blueprintName, blueprintDescription } = await inquirer.prompt([
           {
             type: "input",
-            name: "name",
-            message: "Enter a project name:",
-            validate: validateProjectName,
+            name: "blueprintName",
+            message: "Enter a name for this blueprint:",
+            validate: (input) =>
+              validateBlueprintName(input, existingBlueprints),
+          },
+          {
+            type: "input",
+            name: "blueprintDescription",
+            message: "Enter a description:",
+            default: `${
+              context.config!.type === "web"
+                ? "Web"
+                : context.config!.type === "mobile"
+                ? "Mobile"
+                : "Backend"
+            } project with custom configuration`,
           },
         ]);
 
-        // Create config from blueprint
-        config = {
-          ...selectedBlueprint.config,
-          name,
+        const blueprint: Blueprint = {
+          name: blueprintName,
+          description: blueprintDescription,
+          config: {
+            type: context.config!.type,
+            features: context.config!.features,
+            stateManagement: context.config!.stateManagement,
+            themeToggle: context.config!.themeToggle,
+            apiType: context.config!.apiType,
+            backend: context.config!.backend,
+          },
+          createdAt: new Date().toISOString(),
         };
 
-        console.log(chalk.green(`Using blueprint "${selectedBlueprint.name}"`));
-      } else {
-        // Proceed with normal configuration flow
-        config = await configureProject();
+        saveBlueprint(blueprint);
       }
-    } else {
-      // No blueprints exist, proceed with normal configuration flow
-      config = await configureProject();
-    }
-
-    return config;
-  } catch (error) {
-    console.error(chalk.red("Error getting project configuration:"), error);
-    return null;
-  }
-};
-
-/**
- * Handle saving the configuration as a blueprint if requested
- */
-const handleBlueprintSaving = async (config: ProjectConfig): Promise<void> => {
-  try {
-    const { saveAsBlueprint } = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "saveAsBlueprint",
-        message:
-          "Do you want to save this configuration as a blueprint for future use?",
-        default: false,
-      },
-    ]);
-
-    if (saveAsBlueprint) {
-      const existingBlueprints = loadBlueprints();
-      const { blueprintName, blueprintDescription } = await inquirer.prompt([
-        {
-          type: "input",
-          name: "blueprintName",
-          message: "Enter a name for this blueprint:",
-          validate: (input) => validateBlueprintName(input, existingBlueprints),
-        },
-        {
-          type: "input",
-          name: "blueprintDescription",
-          message: "Enter a description:",
-          default: `${
-            config.type === "web" ? "Web" : "Mobile"
-          } project with custom configuration`,
-        },
-      ]);
-
-      const blueprint: Blueprint = {
-        name: blueprintName,
-        description: blueprintDescription,
-        config: {
-          type: config.type,
-          features: config.features,
-          stateManagement: config.stateManagement,
-          themeToggle: config.themeToggle,
-          apiType: config.apiType,
-          backend: config.backend,
-        },
-        createdAt: new Date().toISOString(),
-      };
-
-      saveBlueprint(blueprint);
     }
   } catch (error) {
-    console.error(chalk.red("Error saving blueprint:"), error);
-    // Continue with the process even if saving blueprint fails
+    context.error = error instanceof Error ? error : new Error(String(error));
+    handleFatalError("Error in project creation workflow", context.error);
   }
 };
 
@@ -1170,327 +1318,46 @@ const deleteBlueprintCommand = async (name: string): Promise<void> => {
   }
 };
 
-// Enhance the generate project function to better handle dry run mode and integration with post-generation actions
-const generateProject = async (
-  config: ProjectConfig,
-  dryRun: boolean = false
-): Promise<void> => {
-  try {
-    // Create the templates directory if it doesn't exist
-    if (!fs.existsSync(DEFAULT_TEMPLATES_DIR) && !dryRun) {
-      fs.mkdirSync(DEFAULT_TEMPLATES_DIR, { recursive: true });
-    }
+/**
+ * Prompt the user to update the CLI
+ */
+const promptForUpdate = async (latestVersion: string): Promise<void> => {
+  console.log(
+    chalk.yellow(
+      `\nA new version (${latestVersion}) of cli-project-generator is available!`
+    )
+  );
+  console.log(chalk.yellow(`You are currently using version ${CLI_VERSION}`));
 
-    // Determine the project path
-    const projectPath = path.join(DEFAULT_TEMPLATES_DIR, config.name);
+  const { shouldUpdate } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "shouldUpdate",
+      message: "Would you like to update now?",
+      default: true,
+    },
+  ]);
 
-    // Check if project directory already exists
-    if (fs.existsSync(projectPath) && !dryRun) {
-      throw new Error(`Project directory already exists at ${projectPath}`);
-    }
-
-    console.log(
-      chalk.blue(`\nGenerating ${config.type} project: ${config.name}`)
-    );
-    if (dryRun) {
-      console.log(chalk.yellow("DRY RUN MODE: No files will be created"));
-    }
-
-    // Create the project directory
-    console.log(chalk.blue(`\nCreating project directory: ${projectPath}`));
-    if (!dryRun) {
-      fs.mkdirSync(projectPath, { recursive: true });
-    }
-
-    // Generate project structure based on type
-    if (config.type === "web" || config.type === "mobile") {
-      await generateFrontendProject(config, projectPath, dryRun);
-    } else {
-      await generateBackendProject(config, projectPath, dryRun);
-    }
-
-    console.log(
-      chalk.green(
-        `\n✅ Project ${
-          dryRun ? "would be" : "has been"
-        } generated at: ${projectPath}`
-      )
-    );
-
-    // Only perform post-generation actions if not in dry run mode
-    if (!dryRun) {
-      await handlePostGeneration(config, projectPath);
-    } else {
+  if (shouldUpdate) {
+    console.log(chalk.blue("\nUpdating cli-project-generator..."));
+    try {
+      // In a real implementation, this would run: npm i -g cli-project-generator@latest
+      // For this simulation, we'll just show a message
       console.log(
-        chalk.yellow(
-          "\nDry run complete. No post-generation actions available in dry run mode."
+        chalk.green(
+          "Update simulation complete! In a real implementation, this would execute:"
         )
       );
-    }
-  } catch (error) {
-    console.error(chalk.red("Error generating project:"), error);
-    throw error;
-  }
-};
+      console.log(chalk.green("npm i -g cli-project-generator@latest"));
 
-/**
- * Generate a frontend project (web or mobile)
- */
-const generateFrontendProject = async (
-  config: ProjectConfig,
-  projectPath: string,
-  dryRun: boolean
-): Promise<void> => {
-  try {
-    // Create project structure based on type
-    const structure =
-      config.type === "web" ? TEMPLATE_DIRS.web : TEMPLATE_DIRS.mobile;
-
-    // Create directories
-    for (const dir of structure.root) {
-      const dirPath = path.join(projectPath, dir);
-      console.log(chalk.blue(`Creating directory: ${dirPath}`));
-      if (!dryRun) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-    }
-
-    // Create files
-    for (const [filePath, contentKey] of Object.entries(structure.files)) {
-      const fullPath = path.join(projectPath, filePath);
-      console.log(chalk.blue(`Creating file: ${fullPath}`));
-
-      const content = getTemplateContent(contentKey, config);
-      if (!dryRun) {
-        fs.writeFileSync(fullPath, content);
-      } else {
-        console.log(
-          chalk.gray(`Would write ${content.length} bytes to ${fullPath}`)
-        );
-      }
-    }
-
-    // Add feature-specific files based on configuration options
-    await addFeatureFiles(config, projectPath, dryRun);
-  } catch (error) {
-    console.error(chalk.red("Error generating frontend project:"), error);
-    throw error;
-  }
-};
-
-/**
- * Add feature-specific files (auth, theme toggle, etc.)
- */
-const addFeatureFiles = async (
-  config: ProjectConfig,
-  projectPath: string,
-  dryRun: boolean
-): Promise<void> => {
-  // Add auth feature if authentication is enabled
-  if (config.type === "web" && config.features.authentication) {
-    // Create auth directories
-    const authDirs = [
-      "src/features/auth",
-      "src/features/auth/components",
-      "src/features/auth/services",
-    ];
-
-    for (const dir of authDirs) {
-      const dirPath = path.join(projectPath, dir);
-      console.log(chalk.blue(`Creating directory: ${dirPath}`));
-      if (!dryRun) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-    }
-
-    // Create auth files
-    const authFiles = {
-      "src/features/auth/components/Login.tsx": "webLoginContent",
-      "src/features/auth/components/RequireAuth.tsx": "webRequireAuthContent",
-      "src/features/auth/index.ts": "webAuthIndexContent",
-    };
-
-    if (config.stateManagement === "redux") {
-      authFiles["src/features/auth/authSlice.ts"] = "webAuthSliceContent";
-      authFiles["src/lib/store.ts"] = "webStoreContent";
-    } else {
-      authFiles["src/features/auth/authContext.tsx"] = "webAuthContextContent";
-    }
-
-    for (const [filePath, contentKey] of Object.entries(authFiles)) {
-      const fullPath = path.join(projectPath, filePath);
-      console.log(chalk.blue(`Creating file: ${fullPath}`));
-
-      const content = getTemplateContent(contentKey, config);
-      if (!dryRun) {
-        fs.writeFileSync(fullPath, content);
-      } else {
-        console.log(
-          chalk.gray(`Would write ${content.length} bytes to ${fullPath}`)
-        );
-      }
-    }
-  }
-
-  // Add theme toggle if enabled
-  if (config.type === "web" && config.themeToggle) {
-    const themeDirPath = path.join(projectPath, "src/lib");
-    const themeFilePath = path.join(themeDirPath, "theme.tsx");
-
-    console.log(chalk.blue(`Creating file: ${themeFilePath}`));
-
-    const content = getTemplateContent("webThemeContent", config);
-    if (!dryRun) {
-      fs.writeFileSync(themeFilePath, content);
-    } else {
       console.log(
-        chalk.gray(`Would write ${content.length} bytes to ${themeFilePath}`)
+        chalk.green("\nPlease restart the CLI to use the new version.")
       );
+      process.exit(0);
+    } catch (error) {
+      console.error(chalk.red("Failed to update. Please update manually:"));
+      console.log(chalk.yellow("npm i -g cli-project-generator@latest"));
     }
-  }
-
-  // Add auth feature for mobile if authentication is enabled
-  if (config.type === "mobile" && config.features.authentication) {
-    // Create additional auth files for mobile
-    const mobileAuthFiles = {};
-
-    if (config.stateManagement === "redux") {
-      mobileAuthFiles["features/auth/authSlice.ts"] = "mobileAuthSliceContent";
-      mobileAuthFiles["lib/store.ts"] = "mobileStoreContent";
-    } else {
-      mobileAuthFiles["features/auth/authContext.tsx"] =
-        "mobileAuthContextContent";
-    }
-
-    // Add useColorScheme for theme support
-    if (config.themeToggle) {
-      mobileAuthFiles["lib/useColorScheme.tsx"] = "mobileUseColorSchemeContent";
-    }
-
-    for (const [filePath, contentKey] of Object.entries(mobileAuthFiles)) {
-      const fullPath = path.join(projectPath, filePath);
-      console.log(chalk.blue(`Creating file: ${fullPath}`));
-
-      const content = getTemplateContent(contentKey, config);
-      if (!dryRun) {
-        fs.writeFileSync(fullPath, content);
-      } else {
-        console.log(
-          chalk.gray(`Would write ${content.length} bytes to ${fullPath}`)
-        );
-      }
-    }
-
-    // Create empty directory for assets/fonts
-    const fontDirPath = path.join(projectPath, "assets/fonts");
-    console.log(chalk.blue(`Creating directory: ${fontDirPath}`));
-    if (!dryRun) {
-      fs.mkdirSync(fontDirPath, { recursive: true });
-
-      // Add placeholder font file
-      const fontPath = path.join(fontDirPath, "SpaceMono-Regular.ttf");
-      // In a real implementation we'd copy an actual font file here
-      fs.writeFileSync(fontPath, "// This is a placeholder for a font file");
-    }
-  }
-};
-
-/**
- * Generate a backend project
- */
-const generateBackendProject = async (
-  config: ProjectConfig,
-  projectPath: string,
-  dryRun: boolean
-): Promise<void> => {
-  try {
-    // Create directories
-    for (const dir of TEMPLATE_DIRS.backend.root) {
-      const dirPath = path.join(projectPath, dir);
-      console.log(chalk.blue(`Creating directory: ${dirPath}`));
-      if (!dryRun) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-    }
-
-    // Create files
-    for (const [filePath, contentKey] of Object.entries(
-      TEMPLATE_DIRS.backend.files
-    )) {
-      const fullPath = path.join(projectPath, filePath);
-      console.log(chalk.blue(`Creating file: ${fullPath}`));
-
-      const content = getTemplateContent(contentKey, config);
-      if (!dryRun) {
-        fs.writeFileSync(fullPath, content);
-      } else {
-        console.log(
-          chalk.gray(`Would write ${content.length} bytes to ${fullPath}`)
-        );
-      }
-    }
-
-    // Create index.ts in services directory
-    const servicesDir = path.join(projectPath, "src/services");
-    const servicesIndexPath = path.join(servicesDir, "index.ts");
-    console.log(chalk.blue(`Creating file: ${servicesIndexPath}`));
-
-    if (!dryRun) {
-      const content = getTemplateContent("backendAuthIndexContent", config);
-      fs.writeFileSync(servicesIndexPath, content);
-    } else {
-      console.log(chalk.gray(`Would create services index file`));
-    }
-  } catch (error) {
-    console.error(chalk.red("Error generating backend project:"), error);
-    throw error;
-  }
-};
-
-/**
- * Handle post-generation actions (install deps, open in VS Code, start server)
- */
-const handlePostGeneration = async (
-  config: ProjectConfig,
-  projectPath: string
-): Promise<void> => {
-  try {
-    if (config.type === "backend") {
-      await handlePostGenerationActions(projectPath, "backend");
-    } else {
-      await handlePostGenerationActions(projectPath, config.type);
-
-      // If frontend project has a backend subdirectory
-      if (
-        (config.type === "web" || config.type === "mobile") &&
-        (config.features.authentication || config.features.crudSetup)
-      ) {
-        const backendPath = path.join(projectPath, "backend");
-
-        if (fs.existsSync(backendPath)) {
-          // Ask if user wants to set up the backend too
-          const { setupBackend } = await inquirer.prompt([
-            {
-              type: "confirm",
-              name: "setupBackend",
-              message: "Do you also want to set up the backend dependencies?",
-              default: true,
-            },
-          ]);
-
-          if (setupBackend) {
-            await handlePostGenerationActions(backendPath, "backend");
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error(chalk.red("Error during post-generation actions:"), error);
-    console.log(
-      chalk.yellow(
-        "You can still use the generated project, but you may need to set it up manually."
-      )
-    );
   }
 };
 

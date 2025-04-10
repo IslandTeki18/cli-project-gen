@@ -1,14 +1,23 @@
 import inquirer from "inquirer";
 import chalk from "chalk";
 import { ProjectConfig } from "../types";
-import { logger } from "./logger";
+
+// Replace the logger with a simpler implementation
+const logger = {
+  info: (message: string) => console.log(chalk.blue(message)),
+  error: (message: string) => console.error(chalk.red(message)),
+  success: (message: string) => console.log(chalk.green(message)),
+  warn: (message: string) => console.log(chalk.yellow(message)),
+};
 
 /**
  * Prompts the user to select project features
  */
-export const promptForFeatures = async (projectType: string): Promise<Partial<ProjectConfig>> => {
+export const promptForFeatures = async (
+  projectType: string
+): Promise<Partial<ProjectConfig>> => {
   logger.info("Let's configure your project features:");
-  
+
   // Common feature questions
   const commonQuestions: inquirer.QuestionCollection = [
     {
@@ -20,11 +29,11 @@ export const promptForFeatures = async (projectType: string): Promise<Partial<Pr
         { name: "GraphQL", value: "graphql" },
       ],
       default: "rest",
-      when: (answers) => 
-        projectType === "backend" || 
-        answers.features?.authentication || 
+      when: (answers) =>
+        projectType === "backend" ||
+        answers.features?.authentication ||
         answers.features?.crudSetup,
-    }
+    },
   ];
 
   // Non-backend specific questions
@@ -96,16 +105,16 @@ export const promptForFeatures = async (projectType: string): Promise<Partial<Pr
       name: "backend.roleBasedAuth",
       message: "Include role-based authorization?",
       default: false,
-      when: (answers) => 
-        (answers.features?.authentication || projectType === "backend"),
+      when: (answers) =>
+        answers.features?.authentication || projectType === "backend",
     },
     {
       type: "confirm",
       name: "backend.jwtSetup",
       message: "Setup JWT authentication?",
       default: true,
-      when: (answers) => 
-        (answers.features?.authentication || projectType === "backend"),
+      when: (answers) =>
+        answers.features?.authentication || projectType === "backend",
     },
     {
       type: "confirm",
@@ -117,7 +126,7 @@ export const promptForFeatures = async (projectType: string): Promise<Partial<Pr
 
   // Determine which questions to ask based on project type
   let responses = {};
-  
+
   if (projectType === "backend") {
     // For backend projects, ask backend-specific questions first
     responses = await inquirer.prompt([
@@ -132,8 +141,11 @@ export const promptForFeatures = async (projectType: string): Promise<Partial<Pr
     ]);
   } else {
     // For frontend projects (web/mobile), ask frontend questions first
-    responses = await inquirer.prompt([...frontendQuestions, ...commonQuestions]);
-    
+    responses = await inquirer.prompt([
+      ...frontendQuestions,
+      ...commonQuestions,
+    ]);
+
     // Then conditionally ask backend questions if needed
     if (responses.features?.authentication || responses.features?.crudSetup) {
       const backendResponses = await inquirer.prompt(backendQuestions);
