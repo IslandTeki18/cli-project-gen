@@ -27,7 +27,7 @@ NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/${config.name}
 
 `;
-    } else if (config.backend.database === "postgresql") {
+    } else if (config.backend.database === "postgres") {
       content += `# Database
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
