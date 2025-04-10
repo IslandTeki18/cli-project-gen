@@ -1,18 +1,18 @@
 # TODO Checklist – CLI Project Generator
 
 ## Project Initialization & Setup
-- [ ] **Initialize Project**
-  - [ ] Run `npm init` to create a new npm project.
-  - [ ] Install TypeScript and necessary dependencies.
-- [ ] **TypeScript Setup**
-  - [ ] Create a `tsconfig.json` with sensible defaults.
-  - [ ] Set up scripts in `package.json` for building and running the project.
-- [ ] **CLI Entry Point**
-  - [ ] Create `src/index.ts` as the CLI entry point.
-  - [ ] Set up a command-line argument parser (commander or yargs).
-  - [ ] Define CLI flags: `--dry-run`, `--config`, `--blueprint`.
-  - [ ] Integrate a color library (e.g., chalk) for stylized logging.
-  - [ ] Output “CLI initialized” message on startup.
+- [x] **Initialize Project**
+  - [x] Run `npm init` to create a new npm project.
+  - [x] Install TypeScript and necessary dependencies.
+- [x] **TypeScript Setup**
+  - [x] Create a `tsconfig.json` with sensible defaults.
+  - [x] Set up scripts in `package.json` for building and running the project.
+- [x] **CLI Entry Point**
+  - [x] Create `src/index.ts` as the CLI entry point.
+  - [x] Set up a command-line argument parser (commander or yargs).
+  - [x] Define CLI flags: `--dry-run`, `--config`, `--blueprint`.
+  - [x] Integrate a color library (e.g., chalk) for stylized logging.
+  - [x] Output “CLI initialized” message on startup.
 
 ## Interactive CLI Prompts
 - [ ] **Prompt for Core Project Data**
