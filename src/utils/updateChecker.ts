@@ -1,43 +1,53 @@
-import chalk from "chalk";
 import https from "https";
 
-const CLI_VERSION = "0.1.0";
-const VERSION_CHECK_URL =
-  "https://raw.githubusercontent.com/example/cli-project-generator/main/version.json";
-
-export const checkForUpdates = async (): Promise<{
+/**
+ * Check if a new version of the CLI is available
+ */
+export async function checkForUpdates(): Promise<{
   hasUpdate: boolean;
   latestVersion: string | null;
-}> => {
+}> {
   return new Promise((resolve) => {
-    try {
-      https
-        .get(VERSION_CHECK_URL, (res) => {
-          let data = "";
-          res.on("data", (chunk) => (data += chunk));
-          res.on("end", () => {
-            try {
-              const { version } = JSON.parse(data);
-              const hasUpdate = version !== CLI_VERSION;
-              resolve({ hasUpdate, latestVersion: version });
-            } catch (e) {
-              console.error(
-                chalk.yellow("Warning: Could not parse version data")
-              );
-              resolve({ hasUpdate: false, latestVersion: null });
-            }
+    // In a real implementation, this would fetch the latest version from a remote source
+    // For now, simulate no updates available
+    setTimeout(() => {
+      resolve({
+        hasUpdate: false,
+        latestVersion: null,
+      });
+    }, 500);
+
+    // Mock implementation that would actually check for updates:
+    /*
+    https.get('https://raw.githubusercontent.com/example/cli-project-generator/main/version.json', (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        try {
+          const versionInfo = JSON.parse(data);
+          const currentVersion = '0.1.0'; // This would come from package.json
+          const hasUpdate = versionInfo.version !== currentVersion;
+          resolve({
+            hasUpdate,
+            latestVersion: versionInfo.version
           });
-        })
-        .on("error", (err) => {
-          console.error(
-            chalk.yellow("Warning: Could not check for updates"),
-            err.message
-          );
-          resolve({ hasUpdate: false, latestVersion: null });
-        });
-    } catch (error) {
-      console.error(chalk.yellow("Warning: Could not check for updates"));
-      resolve({ hasUpdate: false, latestVersion: null });
-    }
+        } catch (error) {
+          console.error('Error checking for updates:', error);
+          resolve({
+            hasUpdate: false,
+            latestVersion: null
+          });
+        }
+      });
+    }).on('error', (error) => {
+      console.error('Error checking for updates:', error);
+      resolve({
+        hasUpdate: false,
+        latestVersion: null
+      });
+    });
+    */
   });
-};
+}

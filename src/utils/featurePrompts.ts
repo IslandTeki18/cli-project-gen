@@ -1,226 +1,213 @@
 import inquirer from "inquirer";
 import chalk from "chalk";
-import { ProjectConfig } from "../types";
-
-// Replace the logger with a simpler implementation
-const logger = {
-  info: (message: string) => console.log(chalk.blue(message)),
-  error: (message: string) => console.error(chalk.red(message)),
-  success: (message: string) => console.log(chalk.green(message)),
-  warn: (message: string) => console.log(chalk.yellow(message)),
-};
+import { FeatureSelections, ProjectConfig } from "../types";
 
 /**
- * Prompts the user to select project features
+ * Prompt the user for project features based on project type
  */
-export const promptForFeatures = async (
+export async function promptForFeatures(
   projectType: string
-): Promise<Partial<ProjectConfig>> => {
-  logger.info("Let's configure your project features:");
+): Promise<FeatureSelections> {
+  let features = {};
+  let stateManagement, themeToggle, apiType;
 
-  // Common feature questions
-  const commonQuestions: inquirer.QuestionCollection = [
+  // Common features for web/mobile projects
+  if (projectType === "web" || projectType === "mobile") {
+    const { selectedFeatures } = await inquirer.prompt([
+      {
+        type: "checkbox",
+        name: "selectedFeatures",
+        message: "Select features to include:",
+        choices: [
+          { name: "Authentication", value: "authentication" },
+          { name: "User Profiles", value: "userProfiles" },
+          { name: "User Settings", value: "userSettings" },
+          { name: "Responsive Layout", value: "responsiveLayout" },
+          { name: "CRUD Operations", value: "crudSetup" },
+        ],
+      },
+    ]);
+
+    features = {
+      authentication: selectedFeatures.includes("authentication"),
+      userProfiles: selectedFeatures.includes("userProfiles"),
+      userSettings: selectedFeatures.includes("userSettings"),
+      responsiveLayout: selectedFeatures.includes("responsiveLayout"),
+      crudSetup: selectedFeatures.includes("crudSetup"),
+    };
+
+    // If UI project, ask about state management
+    const { stateManagementChoice } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "stateManagementChoice",
+        message: "Select state management solution:",
+        choices: [
+          { name: "Redux + RTK", value: "redux" },
+          { name: "React Context", value: "context" },
+          { name: "None / Simple Props", value: "none" },
+        ],
+      },
+    ]);
+
+    stateManagement = stateManagementChoice;
+
+    // Ask about theme toggle
+    const { includeThemeToggle } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "includeThemeToggle",
+        message: "Include dark/light theme toggle?",
+        default: true,
+      },
+    ]);
+
+    themeToggle = includeThemeToggle;
+  }
+
+  // API type for both frontend and backend
+  const { apiTypeChoice } = await inquirer.prompt([
     {
       type: "list",
-      name: "apiType",
-      message: "Select API type:",
+      name: "apiTypeChoice",
+      message: "Select API architecture:",
       choices: [
         { name: "REST API", value: "rest" },
         { name: "GraphQL", value: "graphql" },
       ],
-      default: "rest",
-      when: (answers) =>
-        projectType === "backend" ||
-        answers.features?.authentication ||
-        answers.features?.crudSetup,
     },
-  ];
+  ]);
 
-  // Non-backend specific questions
-  const frontendQuestions: inquirer.QuestionCollection = [
-    {
-      type: "confirm",
-      name: "features.authentication",
-      message: "Include authentication?",
-      default: false,
-    },
-    {
-      type: "confirm",
-      name: "features.userProfiles",
-      message: "Include user profiles?",
-      default: false,
-      when: (answers) => answers.features?.authentication,
-    },
-    {
-      type: "confirm",
-      name: "features.userSettings",
-      message: "Include user settings?",
-      default: false,
-      when: (answers) => answers.features?.authentication,
-    },
-    {
-      type: "confirm",
-      name: "features.responsiveLayout",
-      message: "Include responsive layout?",
-      default: true,
-    },
-    {
-      type: "confirm",
-      name: "features.crudSetup",
-      message: "Include CRUD operations setup?",
-      default: false,
-    },
-    {
-      type: "list",
-      name: "stateManagement",
-      message: "Select state management solution:",
-      choices: [
-        { name: "Redux (with Redux Toolkit)", value: "redux" },
-        { name: "React Context API", value: "context" },
-      ],
-      default: "redux",
-    },
-    {
-      type: "confirm",
-      name: "themeToggle",
-      message: "Include light/dark theme toggle?",
-      default: false,
-    },
-  ];
+  apiType = apiTypeChoice;
 
-  // Backend specific questions - always asked for backend type, or conditionally for others
-  const backendQuestions: inquirer.QuestionCollection = [
-    {
-      type: "list",
-      name: "backend.database",
-      message: "Select database:",
-      choices: [
-        { name: "MongoDB", value: "mongodb" },
-        { name: "PostgreSQL", value: "postgresql" },
-      ],
-      default: "mongodb",
-    },
-    {
-      type: "confirm",
-      name: "backend.roleBasedAuth",
-      message: "Include role-based authorization?",
-      default: false,
-      when: (answers) =>
-        answers.features?.authentication || projectType === "backend",
-    },
-    {
-      type: "confirm",
-      name: "backend.jwtSetup",
-      message: "Setup JWT authentication?",
-      default: true,
-      when: (answers) =>
-        answers.features?.authentication || projectType === "backend",
-    },
-    {
-      type: "confirm",
-      name: "backend.apiVersioning",
-      message: "Include API versioning?",
-      default: false,
-    },
-  ];
-
-  // Determine which questions to ask based on project type
-  let responses = {};
-
-  if (projectType === "backend") {
-    // For backend projects, ask backend-specific questions first
-    responses = await inquirer.prompt([
+  // Backend specific options
+  let backend = {};
+  if (projectType === "backend" || projectType === "web") {
+    const { dbChoice } = await inquirer.prompt([
       {
-        type: "confirm",
-        name: "features.authentication",
-        message: "Include authentication?",
-        default: true,
+        type: "list",
+        name: "dbChoice",
+        message: "Select database:",
+        choices: [
+          { name: "MongoDB", value: "mongodb" },
+          { name: "PostgreSQL", value: "postgres" },
+          { name: "MySQL", value: "mysql" },
+        ],
       },
-      ...commonQuestions,
-      ...backendQuestions,
-    ]);
-  } else {
-    // For frontend projects (web/mobile), ask frontend questions first
-    responses = await inquirer.prompt([
-      ...frontendQuestions,
-      ...commonQuestions,
     ]);
 
-    // Then conditionally ask backend questions if needed
-    if (responses.features?.authentication || responses.features?.crudSetup) {
-      const backendResponses = await inquirer.prompt(backendQuestions);
-      responses = { ...responses, ...backendResponses };
-    }
+    const { backendFeatures } = await inquirer.prompt([
+      {
+        type: "checkbox",
+        name: "backendFeatures",
+        message: "Select backend features:",
+        choices: [
+          { name: "Role-based Authorization", value: "roleBasedAuth" },
+          { name: "JWT Authentication", value: "jwtSetup" },
+          { name: "API Versioning", value: "apiVersioning" },
+        ],
+      },
+    ]);
+
+    backend = {
+      database: dbChoice,
+      roleBasedAuth: backendFeatures.includes("roleBasedAuth"),
+      jwtSetup: backendFeatures.includes("jwtSetup"),
+      apiVersioning: backendFeatures.includes("apiVersioning"),
+    };
   }
 
-  return responses;
-};
+  return {
+    features,
+    stateManagement,
+    themeToggle,
+    apiType,
+    backend,
+  };
+}
 
 /**
- * Display summary of selected features with styled output
+ * Display a summary of selected features
  */
-export const displayFeatureSummary = (config: ProjectConfig): void => {
-  console.log(chalk.bold("\n✨ Project Configuration Summary ✨\n"));
-
-  console.log(chalk.cyan("📋 General Information:"));
+export function displayFeatureSummary(config: ProjectConfig): void {
+  console.log(chalk.green.bold("\n📋 Project Configuration Summary:"));
+  console.log(chalk.blue("Project Name:"), config.name);
   console.log(
-    `${chalk.gray("▸")} Project Type: ${chalk.green(
-      config.type.charAt(0).toUpperCase() + config.type.slice(1)
-    )}`
-  );
-  console.log(`${chalk.gray("▸")} Project Name: ${chalk.green(config.name)}\n`);
-
-  console.log(chalk.cyan("🔌 Core Features:"));
-
-  const features = [
-    { name: "Authentication", enabled: config.features.authentication },
-    { name: "User Profiles", enabled: config.features.userProfiles },
-    { name: "User Settings", enabled: config.features.userSettings },
-    { name: "Responsive Layout", enabled: config.features.responsiveLayout },
-    { name: "CRUD Operations", enabled: config.features.crudSetup },
-    { name: "Theme Toggle", enabled: config.themeToggle },
-  ];
-
-  features.forEach((feature) => {
-    const icon = feature.enabled ? chalk.green("✓") : chalk.red("✗");
-    console.log(`${chalk.gray("▸")} ${icon} ${feature.name}`);
-  });
-
-  console.log(
-    `\n${chalk.gray("▸")} State Management: ${chalk.yellow(
-      config.stateManagement === "redux" ? "Redux" : "Context API"
-    )}`
+    chalk.blue("Project Type:"),
+    projectTypeToDisplayName(config.type)
   );
 
-  if (config.features.authentication || config.features.crudSetup) {
-    console.log(
-      `${chalk.gray("▸")} API Type: ${chalk.yellow(
-        config.apiType.toUpperCase()
-      )}\n`
-    );
+  console.log(chalk.green.bold("\n📦 Features:"));
 
-    console.log(chalk.cyan("🛠️ Backend Configuration:"));
-    console.log(
-      `${chalk.gray("▸")} Database: ${chalk.blue(config.backend.database)}`
-    );
+  // Display enabled features
+  const enabledFeatures = Object.entries(config.features)
+    .filter(([_, enabled]) => enabled)
+    .map(([key, _]) => featureKeyToDisplayName(key));
 
-    if (config.features.authentication) {
-      const jwtIcon = config.backend.jwtSetup
-        ? chalk.green("✓")
-        : chalk.red("✗");
-      console.log(`${chalk.gray("▸")} ${jwtIcon} JWT Authentication`);
-
-      const rbacIcon = config.backend.roleBasedAuth
-        ? chalk.green("✓")
-        : chalk.red("✗");
-      console.log(`${chalk.gray("▸")} ${rbacIcon} Role-based Authorization`);
-    }
-
-    const versioningIcon = config.backend.apiVersioning
-      ? chalk.green("✓")
-      : chalk.red("✗");
-    console.log(`${chalk.gray("▸")} ${versioningIcon} API Versioning`);
+  if (enabledFeatures.length > 0) {
+    console.log(chalk.gray("✅ " + enabledFeatures.join("\n✅ ")));
+  } else {
+    console.log(chalk.gray("No additional features selected"));
   }
 
-  console.log(chalk.bold("\n🚀 Ready to generate your project!\n"));
-};
+  // State management (for web/mobile)
+  if (config.type === "web" || config.type === "mobile") {
+    console.log(chalk.green.bold("\n🔄 State Management:"));
+    console.log(
+      chalk.gray(stateManagementToDisplayName(config.stateManagement))
+    );
+
+    console.log(chalk.green.bold("\n🎨 Theme Toggle:"));
+    console.log(chalk.gray(config.themeToggle ? "Enabled" : "Disabled"));
+  }
+
+  // API and Backend
+  console.log(chalk.green.bold("\n🌐 API Architecture:"));
+  console.log(chalk.gray(config.apiType === "rest" ? "REST API" : "GraphQL"));
+
+  if (config.type === "backend" || config.type === "web") {
+    console.log(chalk.green.bold("\n🗄️ Backend:"));
+    console.log(chalk.gray("Database: " + config.backend.database));
+
+    const backendFeatures = [];
+    if (config.backend.roleBasedAuth)
+      backendFeatures.push("Role-based Authorization");
+    if (config.backend.jwtSetup) backendFeatures.push("JWT Authentication");
+    if (config.backend.apiVersioning) backendFeatures.push("API Versioning");
+
+    if (backendFeatures.length > 0) {
+      console.log(chalk.gray("Additional Backend Features:"));
+      console.log(chalk.gray("✅ " + backendFeatures.join("\n✅ ")));
+    }
+  }
+}
+
+// Helper functions to convert keys to display names
+function projectTypeToDisplayName(type: string): string {
+  const map: Record<string, string> = {
+    web: "Web Application (React)",
+    mobile: "Mobile Application (React Native)",
+    backend: "Backend Service (Node.js)",
+  };
+  return map[type] || type;
+}
+
+function featureKeyToDisplayName(key: string): string {
+  const map: Record<string, string> = {
+    authentication: "User Authentication",
+    userProfiles: "User Profiles",
+    userSettings: "User Settings & Preferences",
+    responsiveLayout: "Responsive Layout",
+    crudSetup: "CRUD Operations",
+  };
+  return map[key] || key;
+}
+
+function stateManagementToDisplayName(key: string): string {
+  const map: Record<string, string> = {
+    redux: "Redux + Redux Toolkit",
+    context: "React Context API",
+    none: "No global state management",
+  };
+  return map[key] || key;
+}

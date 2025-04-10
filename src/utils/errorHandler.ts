@@ -1,23 +1,23 @@
 import chalk from "chalk";
 
-export const handleFatalError = (message: string, error: unknown): void => {
-  console.error(chalk.red(`${message}:`));
+/**
+ * Handle fatal errors in the application
+ */
+export function handleFatalError(message: string, error: unknown): void {
+  console.error(chalk.red("\n❌ " + message));
 
   if (error instanceof Error) {
-    console.error(chalk.red(`${error.message}`));
+    console.error(chalk.red(`Error: ${error.message}`));
     if (error.stack) {
-      const isDev = process.env.NODE_ENV === "development";
-      if (isDev) {
-        console.error(chalk.gray(error.stack.split("\n").slice(1).join("\n")));
-      }
+      console.error(chalk.gray(error.stack.split("\n").slice(1).join("\n")));
     }
   } else {
-    console.error(chalk.red(String(error)));
+    console.error(chalk.red(`Unknown error: ${String(error)}`));
   }
 
   console.log(
-    chalk.yellow("\nThe CLI encountered a critical error and cannot continue.")
+    chalk.yellow(
+      "\nIf this issue persists, please report it at https://github.com/example/cli-project-generator/issues\n"
+    )
   );
-  console.log(chalk.yellow("Please fix the issues above and try again."));
-  process.exit(1);
-};
+}

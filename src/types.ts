@@ -8,11 +8,11 @@ export interface ProjectConfig {
     responsiveLayout: boolean;
     crudSetup: boolean;
   };
-  stateManagement: "redux" | "context";
+  stateManagement: "redux" | "context" | "none";
   themeToggle: boolean;
   apiType: "rest" | "graphql";
   backend: {
-    database: "mongodb" | "postgresql";
+    database: "mongodb" | "postgres" | "mysql";
     roleBasedAuth: boolean;
     jwtSetup: boolean;
     apiVersioning: boolean;
@@ -24,4 +24,23 @@ export interface Blueprint {
   description: string;
   config: Omit<ProjectConfig, "name">;
   createdAt: string;
+}
+
+export interface FeatureSelections {
+  features?: {
+    authentication?: boolean;
+    userProfiles?: boolean;
+    userSettings?: boolean;
+    responsiveLayout?: boolean;
+    crudSetup?: boolean;
+  };
+  stateManagement?: "redux" | "context" | "none";
+  themeToggle?: boolean;
+  apiType?: "rest" | "graphql";
+  backend?: {
+    database?: "mongodb" | "postgres" | "mysql";
+    roleBasedAuth?: boolean;
+    jwtSetup?: boolean;
+    apiVersioning?: boolean;
+  };
 }
