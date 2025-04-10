@@ -637,6 +637,30 @@ function displayBackendStackSummary(): void {
 }
 
 /**
+ * Utility function for file operations with dry run support
+ */
+function fileOperation<T>(
+  operation: () => T,
+  dryRunMessage: string,
+  errorMessage: string
+): T | null {
+  if (options.dryRun) {
+    console.log(chalk.dim(`[Dry run] ${dryRunMessage}`));
+    return null;
+  }
+
+  try {
+    return operation();
+  } catch (error) {
+    console.error(
+      chalk.red(`Error: ${errorMessage}`),
+      error instanceof Error ? error.message : String(error)
+    );
+    return null;
+  }
+}
+
+/**
  * Create the project output directory
  */
 async function createProjectDirectory(): Promise<boolean> {
@@ -655,23 +679,20 @@ async function createProjectDirectory(): Promise<boolean> {
 
   // Make sure output directory exists
   if (!fs.existsSync(DEFAULT_OUTPUT_DIR)) {
-    if (options.dryRun) {
-      console.log(
-        chalk.dim(`[Dry run] Would create directory: ${DEFAULT_OUTPUT_DIR}`)
-      );
-    } else {
-      try {
+    const created = fileOperation(
+      () => {
         fs.mkdirSync(DEFAULT_OUTPUT_DIR, { recursive: true });
         console.log(
           chalk.green(`✓ Created root directory: ${DEFAULT_OUTPUT_DIR}`)
         );
-      } catch (error) {
-        console.error(
-          chalk.red(`Error creating directory: ${DEFAULT_OUTPUT_DIR}`),
-          error
-        );
-        return false;
-      }
+        return true;
+      },
+      `Would create directory: ${DEFAULT_OUTPUT_DIR}`,
+      `Failed to create directory: ${DEFAULT_OUTPUT_DIR}`
+    );
+
+    if (created === null && !options.dryRun) {
+      return false;
     }
   }
 
@@ -698,55 +719,76 @@ async function createProjectDirectory(): Promise<boolean> {
     }
 
     // Delete existing directory if overwrite confirmed
-    if (!options.dryRun) {
-      try {
-        fs.rmSync(projectConfig.outputDir, { recursive: true, force: true });
+    const deleted = fileOperation(
+      () => {
+        fs.rmSync(projectConfig.outputDir!, { recursive: true, force: true });
         console.log(
           chalk.green(
             `✓ Removed existing directory: ${projectConfig.outputDir}`
           )
         );
-      } catch (error) {
-        console.error(
-          chalk.red(`Error removing directory: ${projectConfig.outputDir}`),
-          error
-        );
-        return false;
-      }
-    } else {
-      console.log(
-        chalk.dim(
-          `[Dry run] Would delete directory: ${projectConfig.outputDir}`
-        )
-      );
-    }
-  }
-
-  // Create project directory
-  if (options.dryRun) {
-    console.log(
-      chalk.dim(
-        `[Dry run] Would create project directory: ${projectConfig.outputDir}`
-      )
+        return true;
+      },
+      `Would delete directory: ${projectConfig.outputDir}`,
+      `Failed to remove directory: ${projectConfig.outputDir}`
     );
-  } else {
-    try {
-      fs.mkdirSync(projectConfig.outputDir, { recursive: true });
-      console.log(
-        chalk.green(`✓ Created project directory: ${projectConfig.outputDir}`)
-      );
-    } catch (error) {
-      console.error(
-        chalk.red(
-          `Error creating project directory: ${projectConfig.outputDir}`
-        ),
-        error
-      );
+
+    if (deleted === null && !options.dryRun) {
       return false;
     }
   }
 
-  return true;
+  // Create project directory
+  const created = fileOperation(
+    () => {
+      fs.mkdirSync(projectConfig.outputDir!, { recursive: true });
+      console.log(
+        chalk.green(`✓ Created project directory: ${projectConfig.outputDir}`)
+      );
+      return true;
+    },
+    `Would create project directory: ${projectConfig.outputDir}`,
+    `Failed to create project directory: ${projectConfig.outputDir}`
+  );
+
+  return options.dryRun || created !== null;
+}
+
+/**
+ * Create a file in the project with dry run support
+ */
+function createProjectFile(relativePath: string, content: string): boolean {
+  const filePath = path.join(projectConfig.outputDir!, relativePath);
+  const dirPath = path.dirname(filePath);
+
+  // Ensure directory exists
+  if (!fs.existsSync(dirPath)) {
+    const dirCreated = fileOperation(
+      () => {
+        fs.mkdirSync(dirPath, { recursive: true });
+        return true;
+      },
+      `Would create directory: ${dirPath}`,
+      `Failed to create directory: ${dirPath}`
+    );
+
+    if (dirCreated === null && !options.dryRun) {
+      return false;
+    }
+  }
+
+  // Write file
+  const fileWritten = fileOperation(
+    () => {
+      fs.writeFileSync(filePath, content, "utf8");
+      console.log(chalk.green(`✓ Created file: ${relativePath}`));
+      return true;
+    },
+    `Would create file: ${relativePath}`,
+    `Failed to write file: ${relativePath}`
+  );
+
+  return options.dryRun || fileWritten !== null;
 }
 
 // Main CLI execution will go here
@@ -811,6 +853,16 @@ async function main() {
     if (!directoryCreated) {
       console.log(chalk.red("❌ Failed to create project directory. Exiting."));
       process.exit(1);
+    }
+
+    // Example of using the createProjectFile function
+    if (projectConfig.projectType === "web") {
+      // This is just a placeholder to demonstrate the function
+      // In a real implementation, you would generate actual project files
+      createProjectFile(
+        "README.md",
+        `# ${projectConfig.projectName}\n\nA web project generated with CLI Project Generator.`
+      );
     }
 
     console.log(chalk.green("\nProject setup complete!"));
