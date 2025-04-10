@@ -26,10 +26,14 @@ program.parse(process.argv);
 // Get the parsed options
 const options = program.opts();
 
+// Define the default root directory for generated projects
+const DEFAULT_OUTPUT_DIR = path.join(os.homedir(), "dev", "templates");
+
 // Project configuration that will store all user choices
 const projectConfig: {
   projectType?: "web" | "mobile";
   projectName?: string;
+  outputDir?: string;
   features?: string[];
   backend?: {
     database?: "mongodb" | "postgresql";
@@ -632,6 +636,119 @@ function displayBackendStackSummary(): void {
   console.log(); // Add empty line at the end
 }
 
+/**
+ * Create the project output directory
+ */
+async function createProjectDirectory(): Promise<boolean> {
+  if (!projectConfig.projectName) {
+    console.error(chalk.red("Error: Project name is not defined."));
+    return false;
+  }
+
+  // Create the default output directory if not already set
+  if (!projectConfig.outputDir) {
+    projectConfig.outputDir = path.join(
+      DEFAULT_OUTPUT_DIR,
+      projectConfig.projectName
+    );
+  }
+
+  // Make sure output directory exists
+  if (!fs.existsSync(DEFAULT_OUTPUT_DIR)) {
+    if (options.dryRun) {
+      console.log(
+        chalk.dim(`[Dry run] Would create directory: ${DEFAULT_OUTPUT_DIR}`)
+      );
+    } else {
+      try {
+        fs.mkdirSync(DEFAULT_OUTPUT_DIR, { recursive: true });
+        console.log(
+          chalk.green(`✓ Created root directory: ${DEFAULT_OUTPUT_DIR}`)
+        );
+      } catch (error) {
+        console.error(
+          chalk.red(`Error creating directory: ${DEFAULT_OUTPUT_DIR}`),
+          error
+        );
+        return false;
+      }
+    }
+  }
+
+  // Check if project directory already exists
+  if (fs.existsSync(projectConfig.outputDir)) {
+    console.log(
+      chalk.yellow(
+        `\n⚠️ Warning: Project directory already exists: ${projectConfig.outputDir}`
+      )
+    );
+
+    const { overwrite } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "overwrite",
+        message: "Directory already exists. Do you want to overwrite it?",
+        default: false,
+      },
+    ]);
+
+    if (!overwrite) {
+      console.log(chalk.yellow("Project generation cancelled."));
+      return false;
+    }
+
+    // Delete existing directory if overwrite confirmed
+    if (!options.dryRun) {
+      try {
+        fs.rmSync(projectConfig.outputDir, { recursive: true, force: true });
+        console.log(
+          chalk.green(
+            `✓ Removed existing directory: ${projectConfig.outputDir}`
+          )
+        );
+      } catch (error) {
+        console.error(
+          chalk.red(`Error removing directory: ${projectConfig.outputDir}`),
+          error
+        );
+        return false;
+      }
+    } else {
+      console.log(
+        chalk.dim(
+          `[Dry run] Would delete directory: ${projectConfig.outputDir}`
+        )
+      );
+    }
+  }
+
+  // Create project directory
+  if (options.dryRun) {
+    console.log(
+      chalk.dim(
+        `[Dry run] Would create project directory: ${projectConfig.outputDir}`
+      )
+    );
+  } else {
+    try {
+      fs.mkdirSync(projectConfig.outputDir, { recursive: true });
+      console.log(
+        chalk.green(`✓ Created project directory: ${projectConfig.outputDir}`)
+      );
+    } catch (error) {
+      console.error(
+        chalk.red(
+          `Error creating project directory: ${projectConfig.outputDir}`
+        ),
+        error
+      );
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // Main CLI execution will go here
 async function main() {
   try {
@@ -686,6 +803,27 @@ async function main() {
         // Offer to save this configuration as a blueprint
         await promptToSaveBlueprint();
       }
+    }
+
+    // Create project directory
+    const directoryCreated = await createProjectDirectory();
+
+    if (!directoryCreated) {
+      console.log(chalk.red("❌ Failed to create project directory. Exiting."));
+      process.exit(1);
+    }
+
+    console.log(chalk.green("\nProject setup complete!"));
+    console.log(
+      chalk.cyan(`Project will be generated at: ${projectConfig.outputDir}`)
+    );
+
+    if (options.dryRun) {
+      console.log(
+        chalk.yellow(
+          "\n⚠️ Dry run mode enabled - no files were actually created."
+        )
+      );
     }
 
     // Show final configuration
