@@ -1,31 +1,35 @@
 {
   "name": "cli-project-generator",
-  "version": "0.1.0",
-  "description": "CLI tool for generating full-stack projects with customizable feature selection",
-  "main": "dist/index.js",
+  "version": "1.0.0",
+  "description": "A CLI tool for generating project boilerplates",
+  "main": "index.js",
   "bin": {
-    "project-gen": "dist/index.js"
+    "generate-project": "./bin/cli.js"
   },
   "private": true,
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node bin/cli.js",
     "dev": "ts-node src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "link": "npm link"
   },
   "keywords": [
     "cli",
     "generator",
+    "boilerplate",
     "project",
+    "template",
     "typescript",
     "features"
   ],
-  "author": "Landon McKell",
+  "author": "",
   "license": "ISC",
   "dependencies": {
+    "commander": "^11.0.0",
     "chalk": "^4.1.2",
-    "commander": "^10.0.0",
-    "inquirer": "^8.2.5"
+    "inquirer": "^8.2.5",
+    "fs-extra": "^11.1.1"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.3",
