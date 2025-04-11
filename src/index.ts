@@ -985,6 +985,408 @@ function generateCommonFiles(): boolean {
   return success;
 }
 
+/**
+ * Create the basic folder structure for a web application
+ */
+function generateWebAppStructure(): boolean {
+  console.log(chalk.blue("\n📂 Generating Web App folder structure..."));
+
+  let success = true;
+
+  // Define the folders to create
+  const folders = [
+    "public",
+    "src/app",
+    "src/components",
+    "src/config",
+    "src/features",
+    "src/store",
+    "src/hooks",
+    "src/assets",
+    "src/testing",
+    "src/types",
+    "src/lib",
+    "src/utils",
+  ];
+
+  // Create each folder
+  for (const folder of folders) {
+    const created = fileOperation(
+      () => {
+        fs.mkdirSync(path.join(projectConfig.outputDir!, folder), {
+          recursive: true,
+        });
+        console.log(chalk.green(`✓ Created directory: ${folder}/`));
+        return true;
+      },
+      `Would create directory: ${folder}/`,
+      `Failed to create directory: ${folder}/`
+    );
+
+    if (created === null && !options.dryRun) {
+      success = false;
+    }
+  }
+
+  // Create a starter index.tsx file
+  const indexCreated = generateWebIndexFile();
+  if (!indexCreated && !options.dryRun) {
+    success = false;
+  }
+
+  return success;
+}
+
+/**
+ * Generate a starter index.tsx file for Web App
+ */
+function generateWebIndexFile(): boolean {
+  console.log(chalk.blue("📄 Generating starter index.tsx..."));
+
+  const indexContent = `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+
+function App() {
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+        <h1 className="text-2xl font-bold text-center mb-6">
+          Welcome to ${projectConfig.projectName || "My App"}!
+        </h1>
+        <p className="text-gray-600 text-center">
+          This project was generated using CLI Project Generator.
+        </p>
+        <div className="mt-6 p-4 bg-blue-50 rounded text-sm">
+          <p className="text-blue-800 mb-2 font-semibold">Next steps:</p>
+          <ul className="list-disc pl-5 text-blue-700">
+            <li>Edit src/app files to build your application</li>
+            <li>Create components in src/features for specific functionality</li>
+            <li>Add shared components in src/shared</li>
+            <li>Happy coding!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
+
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+`;
+
+  return createProjectFile("src/index.tsx", indexContent);
+}
+
+/**
+ * Generate a starter App.tsx file for Mobile App
+ */
+function generateMobileAppFile(): boolean {
+  console.log(chalk.blue("📄 Generating starter App.tsx..."));
+
+  const appContent = `import React from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Welcome to ${
+          projectConfig.projectName || "My App"
+        }!</Text>
+        <Text style={styles.subtitle}>
+          This project was generated using CLI Project Generator.
+        </Text>
+        
+        <View style={styles.infoBox}>
+          <Text style={styles.infoTitle}>Next steps:</Text>
+          <View style={styles.listContainer}>
+            <Text style={styles.listItem}>• Edit app files to build your application</Text>
+            <Text style={styles.listItem}>• Create components in components directory</Text>
+            <Text style={styles.listItem}>• Add feature-specific code in features directory</Text>
+            <Text style={styles.listItem}>• Happy coding!</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    maxWidth: 400,
+    width: '100%',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  infoBox: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: '#e6f2ff',
+    borderRadius: 6,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0066cc',
+    marginBottom: 8,
+  },
+  listContainer: {
+    marginTop: 8,
+  },
+  listItem: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 6,
+    lineHeight: 20,
+  }
+});
+`;
+
+  return createProjectFile("app/App.tsx", appContent);
+}
+
+/**
+ * Create the basic folder structure for a mobile application
+ */
+function generateMobileAppStructure(): boolean {
+  console.log(chalk.blue("\n📂 Generating Mobile App folder structure..."));
+
+  let success = true;
+
+  // Define the folders to create
+  const folders = [
+    "app",
+    "components",
+    "features",
+    "assets",
+    "lib",
+    "utils",
+    "config",
+    "hooks",
+    "types",
+  ];
+
+  // Create each folder
+  for (const folder of folders) {
+    const created = fileOperation(
+      () => {
+        fs.mkdirSync(path.join(projectConfig.outputDir!, folder), {
+          recursive: true,
+        });
+        console.log(chalk.green(`✓ Created directory: ${folder}/`));
+        return true;
+      },
+      `Would create directory: ${folder}/`,
+      `Failed to create directory: ${folder}/`
+    );
+
+    if (created === null && !options.dryRun) {
+      success = false;
+    }
+  }
+
+  // Create asset subfolders
+  const assetSubfolders = ["images", "fonts", "icons"];
+  for (const subfolder of assetSubfolders) {
+    const created = fileOperation(
+      () => {
+        fs.mkdirSync(path.join(projectConfig.outputDir!, "assets", subfolder), {
+          recursive: true,
+        });
+        console.log(chalk.green(`✓ Created directory: assets/${subfolder}/`));
+        return true;
+      },
+      `Would create directory: assets/${subfolder}/`,
+      `Failed to create directory: assets/${subfolder}/`
+    );
+
+    if (created === null && !options.dryRun) {
+      success = false;
+    }
+  }
+
+  // Create a basic App.tsx file in the app directory
+  const appFileCreated = generateMobileAppFile();
+  if (!appFileCreated && !options.dryRun) {
+    success = false;
+  }
+
+  return success;
+}
+
+/**
+ * Create the basic folder structure for a backend application
+ */
+function generateBackendStructure(): boolean {
+  console.log(chalk.blue("\n📂 Generating Backend folder structure..."));
+
+  let success = true;
+
+  // Define the folders to create
+  const folders = [
+    "src/config",
+    "src/controllers",
+    "src/middleware",
+    "src/models",
+    "src/routes",
+    "src/services",
+    "src/utils",
+    "src/types",
+    "src/tests",
+  ];
+
+  // Create each folder
+  for (const folder of folders) {
+    const created = fileOperation(
+      () => {
+        fs.mkdirSync(path.join(projectConfig.outputDir!, folder), {
+          recursive: true,
+        });
+        console.log(chalk.green(`✓ Created directory: ${folder}/`));
+        return true;
+      },
+      `Would create directory: ${folder}/`,
+      `Failed to create directory: ${folder}/`
+    );
+
+    if (created === null && !options.dryRun) {
+      success = false;
+    }
+  }
+
+  // Create a starter index.ts file
+  const indexCreated = generateBackendIndexFile();
+  if (!indexCreated && !options.dryRun) {
+    success = false;
+  }
+
+  return success;
+}
+
+/**
+ * Generate a starter index.ts file for Backend Application
+ */
+function generateBackendIndexFile(): boolean {
+  console.log(chalk.blue("📄 Generating starter src/index.ts..."));
+
+  const dbImport =
+    projectConfig.backend?.database === "mongodb"
+      ? `import mongoose from 'mongoose';`
+      : `import { Pool } from 'pg';`;
+
+  const dbConnection =
+    projectConfig.backend?.database === "mongodb"
+      ? `// Connect to MongoDB
+mongoose
+  .connect(process.env.DB_URI || 'mongodb://localhost:27017/myapp')
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('❌ MongoDB connection error:', error);
+    process.exit(1);
+  });`
+      : `// Connect to PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.DB_URI || 'postgresql://postgres:postgres@localhost:5432/myapp',
+});
+
+pool.connect()
+  .then(() => {
+    console.log('✅ Connected to PostgreSQL');
+  })
+  .catch((error) => {
+    console.error('❌ PostgreSQL connection error:', error);
+    process.exit(1);
+  });`;
+
+  const apiVersioning = projectConfig.backend?.apiVersioning
+    ? `// API versioning middleware
+app.use('/api/v1', v1Routes);`
+    : `// API routes
+app.use('/api', routes);`;
+
+  const indexContent = `import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+${dbImport}
+${
+  projectConfig.backend?.apiVersioning
+    ? `import v1Routes from './routes/v1';`
+    : `import routes from './routes';`
+}
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+${dbConnection}
+
+// Routes
+${apiVersioning}
+
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'An unexpected error occurred',
+    error: process.env.NODE_ENV === 'production' ? {} : err.stack
+  });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(\`🚀 Server running on port \${PORT}\`);
+  console.log(\`📝 API Documentation: http://localhost:\${PORT}/api-docs\`);
+});
+
+export default app;
+`;
+
+  return createProjectFile("src/index.ts", indexContent);
+}
+
 // Main CLI execution will go here
 async function main() {
   try {
@@ -1057,13 +1459,51 @@ async function main() {
       );
     }
 
+    // Generate project structure based on project type
+    if (projectConfig.projectType === "web") {
+      const webStructureGenerated = generateWebAppStructure();
+      if (!webStructureGenerated && !options.dryRun) {
+        console.log(
+          chalk.yellow(
+            "⚠️ Warning: Web app structure could not be fully generated"
+          )
+        );
+      }
+    } else if (projectConfig.projectType === "mobile") {
+      const mobileStructureGenerated = generateMobileAppStructure();
+      if (!mobileStructureGenerated && !options.dryRun) {
+        console.log(
+          chalk.yellow(
+            "⚠️ Warning: Mobile app structure could not be fully generated"
+          )
+        );
+      }
+    }
+
+    // Generate backend structure if needed
+    // In a real app, you might have this as a separate option or always include it
+    const generateBackend = true; // This could be a user choice in the future
+    if (generateBackend) {
+      const backendStructureGenerated = generateBackendStructure();
+      if (!backendStructureGenerated && !options.dryRun) {
+        console.log(
+          chalk.yellow(
+            "⚠️ Warning: Backend structure could not be fully generated"
+          )
+        );
+      }
+    }
+
     // Example of using the createProjectFile function
     if (projectConfig.projectType === "web") {
-      // This is just a placeholder to demonstrate the function
-      // In a real implementation, you would generate actual project files
       createProjectFile(
         "README.md",
         `# ${projectConfig.projectName}\n\nA web project generated with CLI Project Generator.`
+      );
+    } else if (projectConfig.projectType === "mobile") {
+      createProjectFile(
+        "README.md",
+        `# ${projectConfig.projectName}\n\nA mobile app project generated with CLI Project Generator.`
       );
     }
 

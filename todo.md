@@ -1,6 +1,7 @@
 # TODO Checklist – CLI Project Generator
 
 ## Project Initialization & Setup
+
 - [x] **Initialize Project**
   - [x] Run `npm init` to create a new npm project.
   - [x] Install TypeScript and necessary dependencies.
@@ -12,9 +13,10 @@
   - [x] Set up a command-line argument parser (commander or yargs).
   - [x] Define CLI flags: `--dry-run`, `--config`, `--blueprint`.
   - [x] Integrate a color library (e.g., chalk) for stylized logging.
-  - [x] Output “CLI initialized” message on startup.
+  - [x] Output "CLI initialized" message on startup.
 
 ## Interactive CLI Prompts
+
 - [x] **Prompt for Core Project Data**
   - [x] Prompt for project type: Web (React + TailwindCSS) or Mobile (Expo + NativeWind).
   - [x] Prompt for project name; validate valid folder names.
@@ -39,25 +41,27 @@
   - [x] Implement saving current configuration as a blueprint (save to `~/.mycli/blueprints.json`).
 
 ## File & Directory Generation Infrastructure
+
 - [x] **General File Generation**
   - [x] Create output directory based on a fixed root folder (e.g., `~/dev/templates/`).
   - [x] Create subdirectory named after the project name.
   - [x] Implement dry-run mode to simulate file generation.
 - [ ] **Generate Common Files**
   - [x] Create `.env` file with default variables (PORT, DB URIs, JWT_SECRET, API_URL).
-  - [ ] Create `.gitignore` file with basic ignore rules.
-  - [ ] Create `prettier.config.js` with preferred configuration.
-- [ ] **Project Structure Generation**
-  - [ ] **Web App (Hybrid) Structure**
-    - [ ] Create folders: `/public`, `/src/app`, `/src/features`, `/src/shared`, `/src/lib`, `/src/utils`.
-    - [ ] Create a starter `src/index.tsx`.
-  - [ ] **Mobile App (Expo-Optimized) Structure**
-    - [ ] Create folders: `/app`, `/components`, `/features`, `/assets`, `/lib`.
-  - [ ] **Backend Project Structure (Node/Express)**
-    - [ ] Create folders: `/src/config`, `/src/controllers`, `/src/middleware`, `/src/models`, `/src/routes`, `/src/services`, `/src/utils`.
-    - [ ] Create starter file `src/index.ts`.
+  - [x] Create `.gitignore` file with basic ignore rules.
+  - [x] Create `prettier.config.js` with preferred configuration.
+- [x] **Project Structure Generation**
+  - [x] **Web App (Hybrid) Structure**
+    - [x] Create folders: `/public`, `/src/app`, `/src/features`, `/src/shared`, `/src/lib`, `/src/utils`.
+    - [x] Create a starter `src/index.tsx`.
+  - [x] **Mobile App (Expo-Optimized) Structure**
+    - [x] Create folders: `/app`, `/components`, `/features`, `/assets`, `/lib`.
+  - [x] **Backend Project Structure (Node/Express)**
+    - [x] Create folders: `/src/config`, `/src/controllers`, `/src/middleware`, `/src/models`, `/src/routes`, `/src/services`, `/src/utils`.
+    - [x] Create starter file `src/index.ts`.
 
 ## Scaffolding for Each Generated Project
+
 - [ ] **Frontend – Web Application Boilerplate**
   - [ ] Initialize a minimal React + TypeScript app.
   - [ ] Set up TailwindCSS integration.
@@ -86,6 +90,7 @@
   - [ ] Ensure a configuration module is in place to read environment variables.
 
 ## Post-Generation Actions
+
 - [ ] **Post-Generation Prompts**
   - [ ] Prompt to run `npm install` in the generated projects.
   - [ ] Prompt to open the project in VS Code.
@@ -93,6 +98,7 @@
   - [ ] Wire these commands to their respective directories with error handling.
 
 ## CLI Update Mechanism & Final Integration
+
 - [ ] **Update Mechanism**
   - [ ] Implement a simple mechanism to check for newer CLI versions.
   - [ ] Prompt the user with the option to update.
@@ -103,6 +109,7 @@
   - [ ] Perform final tests to make sure every component calls the next, eliminating orphaned code.
 
 ## Testing & Manual Verification
+
 - [ ] **Local Testing**
   - [ ] Run the CLI in dry-run mode to verify interactive prompts.
   - [ ] Verify the generated folder structure and file contents for Web, Mobile, and Backend.
