@@ -1115,6 +1115,12 @@ function initializeReactTypeScriptApp(): boolean {
     success = false;
   }
 
+  // Generate Tailwind CSS configuration
+  const tailwindConfigCreated = generateTailwindConfig();
+  if (!tailwindConfigCreated && !options.dryRun) {
+    success = false;
+  }
+
   return success;
 }
 
@@ -1153,6 +1159,7 @@ function generateReactPackageJson(): boolean {
       "eslint-plugin-react-hooks": "^4.6.0",
       "eslint-plugin-react-refresh": "^0.4.3",
       postcss: "^8.4.27",
+      tailwindcss: "^3.3.3",
       vite: "^4.4.7",
       vitest: "^0.34.1",
     },
@@ -1163,6 +1170,75 @@ function generateReactPackageJson(): boolean {
     "frontend/package.json",
     JSON.stringify(packageContent, null, 2)
   );
+}
+
+/**
+ * Generate Tailwind CSS configuration
+ */
+function generateTailwindConfig(): boolean {
+  console.log(chalk.blue("📄 Generating Tailwind CSS configuration..."));
+  let success = true;
+
+  // Generate tailwind.config.js
+  const tailwindConfigContent = `/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}`;
+
+  // Generate postcss.config.js
+  const postcssConfigContent = `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}`;
+
+  // Update the CSS file to include Tailwind directives
+  const cssContent = `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+`;
+
+  // Create the tailwind.config.js file
+  const tailwindConfigCreated = createProjectFile(
+    "frontend/tailwind.config.js",
+    tailwindConfigContent
+  );
+
+  // Create the postcss.config.js file
+  const postcssConfigCreated = createProjectFile(
+    "frontend/postcss.config.js",
+    postcssConfigContent
+  );
+
+  // Update the CSS file with Tailwind directives
+  const cssUpdated = createProjectFile("frontend/src/index.css", cssContent);
+
+  return tailwindConfigCreated && postcssConfigCreated && cssUpdated;
 }
 
 /**
@@ -1333,35 +1409,10 @@ root.render(
 );
 `;
 
-  const cssContent = `
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-`;
+  // Note: We're no longer generating the CSS file here since it's handled in the generateTailwindConfig function
 
   // Create the index.tsx file in frontend/src directory
-  const indexCreated = createProjectFile(
-    "frontend/src/index.tsx",
-    indexContent
-  );
-
-  // Create a basic CSS file
-  const cssCreated = createProjectFile("frontend/src/index.css", cssContent);
-
-  return indexCreated && cssCreated;
+  return createProjectFile("frontend/src/index.tsx", indexContent);
 }
 
 /**

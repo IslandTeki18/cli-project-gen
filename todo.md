@@ -46,7 +46,7 @@
   - [x] Create output directory based on a fixed root folder (e.g., `~/dev/templates/`).
   - [x] Create subdirectory named after the project name.
   - [x] Implement dry-run mode to simulate file generation.
-- [ ] **Generate Common Files**
+- [x] **Generate Common Files**
   - [x] Create `.env` file with default variables (PORT, DB URIs, JWT_SECRET, API_URL).
   - [x] Create `.gitignore` file with basic ignore rules.
   - [x] Create `prettier.config.js` with preferred configuration.
@@ -63,8 +63,8 @@
 ## Scaffolding for Each Generated Project
 
 - [ ] **Frontend – Web Application Boilerplate**
-  - [ ] Initialize a minimal React + TypeScript app.
-  - [ ] Set up TailwindCSS integration.
+  - [x] Initialize a minimal React + TypeScript app.
+  - [x] Set up TailwindCSS integration.
   - [ ] Integrate React Router with a placeholder Home page.
   - [ ] Create a sample feature directory (e.g., `/src/features/auth`):
     - [ ] Minimal login form component.
